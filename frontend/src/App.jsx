@@ -9,9 +9,9 @@ import NotificationPage from "./pages/notification/NotificationPage";
 import { Toaster } from "react-hot-toast";
 import {useQuery} from '@tanstack/react-query'
 import LoadingSpinner from "./components/common/LoadingSpinner";
-import { Chats } from "./pages/chats/chats";
+import { Chats } from "./pages/chats/Chats";
 import { UserChats } from "./pages/chats/userChats";
-import { Messages } from "./pages/chats/messages";
+import { Messages } from "./pages/chats/Messages";
 import { PhoneChat } from "./pages/phone/phoneChat";
 import { PhoneAdd } from "./pages/phone/PhoneAdd";
 import Post from "./pages/home/Post";
