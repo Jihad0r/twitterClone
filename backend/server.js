@@ -32,11 +32,12 @@ app.use("/api/posts",postRoutes)
 app.use("/api/notifications",notificationRoutes)
 app.use("/api/chats",chatRoutes)
 
-app.use(express.static(path.join(__dirname, "/frontend/dist")));
+	app.use(express.static(path.join(__dirname, "/frontend/dist")));
 
-app.get("*", (req, res) => {
-	res.sendFile(path.join(__dirname, "frontend", "dist", "index.html"));
-});
+	app.get("*", (req, res) => {
+		res.sendFile(path.resolve(__dirname, "frontend", "dist", "index.html"));
+	});
+
 server.listen(port,()=>{
     console.log("Server running")
     connectDB()

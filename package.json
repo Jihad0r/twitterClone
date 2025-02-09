@@ -3,11 +3,11 @@
   "version": "1.0.0",
   "main": "backend/server.js",
   "scripts": {
-    "dev": "NODE_ENV=development nodemon backend/server.js",
+    "server": "NODE_ENV=development nodemon backend/server.js",
 		"start":"npm install --omit=dev && NODE_ENV=production node backend/server.js",
 		"build": "npm install && npm install --prefix frontend && npm run build --prefix frontend"
   },
-  "keywords": [],
+  "keywords": [], 
   "author": "",
   "type": "module",
   "license": "ISC",
