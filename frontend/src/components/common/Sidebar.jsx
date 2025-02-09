@@ -2,6 +2,9 @@ import XSvg from "../svgs/X";
 
 import { MdHomeFilled } from "react-icons/md";
 import { IoNotifications } from "react-icons/io5";
+import { BsFillChatLeftFill } from "react-icons/bs";
+import { BsFillChatLeftDotsFill } from "react-icons/bs";
+import { IoMdPersonAdd } from "react-icons/io";
 import { FaUser } from "react-icons/fa";
 import { Link } from "react-router-dom";
 import { BiLogOut } from "react-icons/bi";
@@ -9,8 +12,13 @@ import { BiLogOut } from "react-icons/bi";
 import {useMutation,useQueryClient,useQuery} from '@tanstack/react-query'
 
 import toast from "react-hot-toast";
-const Sidebar = () => {
+import { useEffect, useState } from "react";
+const Sidebar = () => { 
+	const [width, setWidth] = useState(window.innerWidth);
 	const queryClient = useQueryClient()
+	const {data:notifications} = useQuery({queryKey: ["notifications"]})
+	const count = notifications?.reduce((acc, e) => acc + (e.read === false ? 1 : 0), 0) || 0;
+
 	const {mutate,isError,isPending,error} = useMutation({
 		mutationFn: async () =>{
 			try{
@@ -32,8 +40,14 @@ const Sidebar = () => {
 		}
 	})
 	const {data:authUser} = useQuery({queryKey:["authUser"]})
+
+	useEffect(() => {
+		const handleResize = () => setWidth(window.innerWidth);
 	
-	return (
+		window.addEventListener("resize", handleResize);
+		return () => window.removeEventListener("resize", handleResize);
+	  }, []);
+	return(
 		<div className='md:flex-[2_2_0] w-18 max-w-52'>
 			<div className='sticky top-0 left-0 h-screen flex flex-col border-r border-gray-700 w-20 md:w-full'>
 				<Link to='/' className='flex justify-center md:justify-start'>
@@ -52,13 +66,17 @@ const Sidebar = () => {
 					<li className='flex justify-center md:justify-start'>
 						<Link
 							to='/notifications'
-							className='flex gap-3 items-center hover:bg-stone-900 transition-all rounded-full duration-300 py-2 pl-2 pr-4 max-w-fit cursor-pointer'
+							className='flex gap-3 relative items-center hover:bg-stone-900 transition-all rounded-full duration-300 py-2 pl-2 pr-4 max-w-fit cursor-pointer'
 						>
 							<IoNotifications className='w-6 h-6' />
+							{count > 0 && (
+								<span className="badge badge-error text-white font-bold text-sm w-5 rounded-full absolute -top-2 -right-2">
+								{count}
+								</span>
+							)}
 							<span className='text-lg hidden md:block'>Notifications</span>
 						</Link>
 					</li>
-
 					<li className='flex justify-center md:justify-start'>
 						<Link
 							to={`/profile/${authUser?.username}`}
@@ -68,6 +86,35 @@ const Sidebar = () => {
 							<span className='text-lg hidden md:block'>Profile</span>
 						</Link>
 					</li>
+					{width >= 1024 ?
+					<li className='flex justify-center md:justify-start'>
+						<Link
+							to={`/chats`}
+							className='flex gap-3 items-center hover:bg-stone-900 transition-all rounded-full duration-300 py-2 pl-2 pr-4 max-w-fit cursor-pointer'
+						>
+							<BsFillChatLeftFill className='w-6 h-6' />
+							<span className='text-lg hidden md:block'>Chats</span>
+						</Link>
+					</li>:<>
+					<li className='flex justify-center md:justify-start'>
+						<Link
+							to={`/add`}
+							className='flex gap-3 items-center hover:bg-stone-900 transition-all rounded-full duration-300 py-2 pl-2 pr-4 max-w-fit cursor-pointer'
+						>
+							<IoMdPersonAdd  className='w-6 h-6' />
+							<span className='text-lg hidden md:block'>Add</span>
+						</Link>
+					</li>
+					<li className='flex justify-center md:justify-start'>
+						<Link
+							to={`/message`}
+							className='flex gap-3 items-center hover:bg-stone-900 transition-all rounded-full duration-300 py-2 pl-2 pr-4 max-w-fit cursor-pointer'
+						> 
+							<BsFillChatLeftDotsFill   className='w-6 h-6' />
+							<span className='text-lg hidden md:block'>Chats</span>
+						</Link>
+					</li>
+					</>}
 				</ul>
 				{authUser && (
 					<Link

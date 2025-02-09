@@ -3,7 +3,9 @@ import { BiRepost } from "react-icons/bi";
 import { FaRegHeart } from "react-icons/fa";
 import { FaRegBookmark } from "react-icons/fa6";
 import { FaTrash } from "react-icons/fa";
-import { useState } from "react";
+import { CiImageOn } from "react-icons/ci";
+import { useRef, useState } from "react";
+import { IoCloseSharp } from "react-icons/io5";
 import { Link } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { formatPostDate } from "../../utils/data";
@@ -11,6 +13,8 @@ import LoadingSpinner from "./LoadingSpinner";
 
 const Post = ({ post }) => {
 	const [comment, setComment] = useState("");
+	const [img, setImg] = useState(null);
+	const imgRef = useRef(null);
 	const {data:authUser} = useQuery({queryKey:["authUser"]})
 	const queryClient = useQueryClient()
 	const {mutate:deletePost,isPending}= useMutation({
@@ -58,38 +62,32 @@ const Post = ({ post }) => {
 			})
 		}
 	})
-	const {mutate:commenPost,isPending:isCommenting}= useMutation({
-		mutationFn: async()=>{
+	const { mutate: commentPost, isPending: isCommenting } = useMutation({
+		mutationFn: async ({ text, img }) => {
 			try {
-				const res = await fetch(`api/posts/comment/${post._id}`,{
-					method:"POST",
-					headers:{
-						"Content-Type":"application/json"
-					},
-					body:JSON.stringify({text:comment})
-				})
-				const data = await res.json()
-				if(!res.ok){
-					throw new Error(data.error||"something went wrong")
+				const res = await fetch(`api/posts/comment/${post._id}`, {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({ text, img })
+				});
+				const data = await res.json();
+				if (!res.ok) {
+					throw new Error(data.error || "Something went wrong");
 				}
-				return data
+				return data;
 			} catch (error) {
-				throw new Error(error)
+				throw new Error(error);
 			}
 		},
-		onSuccess:async(updatedComments)=>{
-			
-			// queryClient.invalidateQueries({queryKey:["posts"]})
-			queryClient.setQueriesData(["posts"],oldData =>{
-				return oldData.map(p=>{
-					if(p._id === post._id){
-						return {...p,comments:updatedComments}
-					}
-					return p
-				})
-			})
+		onSuccess: (updatedComments) => {
+			queryClient.setQueryData(["posts"], oldData => {
+				return oldData ? oldData.map(p => (p._id === post._id ? { ...p, comments: updatedComments } : p)) : [];
+			});
 		}
-	})
+	});
+	
+	
+	
 	const postOwner = post.user;
 	const isLiked = post.likes.includes(authUser._id);
 	const isMyPost = authUser._id === postOwner._id; 
@@ -98,19 +96,29 @@ const Post = ({ post }) => {
 	const handleDeletePost = () => {
 		deletePost()
 	};
-
 	const handlePostComment = (e) => {
 		e.preventDefault();
+		if (!comment.trim() && !img) return;
+		if (isCommenting) return;
 		
-		if(isCommenting)return;
-		commenPost()
+		commentPost({ text: comment.trim(), img });
 	};
+	
 
 	const handleLikePost = () => {
 		if(isLiking)return;
 		likePost()
 	};
-
+	const handleImgChange = (e) => {
+		const file = e.target.files[0];
+		if (file) {
+			const reader = new FileReader();
+			reader.onload = () => {
+				setImg(reader.result);
+			};
+			reader.readAsDataURL(file);
+		}
+	};
 	return (
 		<>
 			<div className='flex gap-2 items-start p-4 border-b border-gray-700'>
@@ -174,7 +182,7 @@ const Post = ({ post }) => {
 														<img
 															src={comment.user.profileImg || "/avatar-placeholder.png"}
 														/>
-													</div>
+										 			</div>
 												</div>
 												<div className='flex flex-col'>
 													<div className='flex items-center gap-1'>
@@ -198,6 +206,27 @@ const Post = ({ post }) => {
 											value={comment}
 											onChange={(e) => setComment(e.target.value)}
 										/>
+										{img && (
+											<div className='relative w-72 mx-auto'>
+												<IoCloseSharp
+													className='absolute top-0 right-0 text-white bg-gray-800 rounded-full w-5 h-5 cursor-pointer'
+													onClick={() => {
+														setImg(null);
+														imgRef.current.value = null;
+													}}
+												/>
+												<img src={img} className='w-full mx-auto h-72 object-contain rounded' />
+											</div>
+										)}
+										<div className='flex justify-between border-t py-2 border-t-gray-700'>
+											<div className='flex gap-1 items-center'>
+												<CiImageOn
+													className='fill-primary w-6 h-6 cursor-pointer'
+													onClick={() => imgRef.current.click()}
+												/>
+											</div>
+											<input type='file' hidden ref={imgRef} onChange={handleImgChange} />
+										</div>
 										<button className='btn btn-primary rounded-full btn-sm text-white px-4'>
 											{isCommenting ? (
 												<LoadingSpinner size="md"/>

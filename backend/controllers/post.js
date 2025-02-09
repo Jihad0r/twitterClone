@@ -1,13 +1,36 @@
 import Post from "../models/post.js"
 import User from "../models/user.js"
 import Notification from "../models/notification.js"
-import {v2 as cloudinary} from "Cloudinary"
+import {v2 as cloudinary} from "cloudinary"
 
-export const createPost= async (req,res)=>{
+
+export const getPost = async (req,res)=>{
+	try {
+        const postId = req.params.id;
+
+		const post = await Post.findById(postId)
+			.sort({ createdAt: -1 })
+			.populate({
+				path: "user",
+				select: "-password",
+			})
+			.populate({
+				path: "comments.user",
+				select: "-password",
+			});
+
+        if (!post) return res.status(404).json({ error: "Post not found" });
+		res.status(200).json(post);
+	} catch (error) {
+        res.status(500).json({error:error.message})
+	}
+};
+
+export const createPost= async (req,res)=>{   
     try{
         const {text} = req.body
         let {img} = req.body
-        const userId = req.user._id
+        const userId = req.user._id.toString()
 
         const user = await User.findById(userId)
 		if (!user) return res.status(404).json({ message: "User not found" });
@@ -30,7 +53,7 @@ export const createPost= async (req,res)=>{
         res.status(500).json({error:error.message})
     }
 }
-export const deletePost =async (req,res)=>{
+export const deletePost =async (req,res)=>{ 
     try{
         const post = await Post.findById(req.params.id)
 		if (!post) return res.status(404).json({ message: "Post not found" });
@@ -45,35 +68,57 @@ export const deletePost =async (req,res)=>{
         
         res.status(200).json({message: "Post deleted"})
     }catch(error){
-        res.status(500).json({error:error.message})
+        res.status(500).json({error:error.message}) 
     }
 }
 export const commentPost = async (req, res) => {
     try {
-		const { text } = req.body;
+        const { text } = req.body;
+        let { img } = req.body;
         const postId = req.params.id;
         const userId = req.user._id;
 
-		if (!text) {
-			return res.status(400).json({ error: "Text field is required" });
-        }
-		const post = await Post.findById(postId);
-
-		if (!post) {
-			return res.status(404).json({ error: "Post not found" });
+        if (!text?.trim() && !img) {
+            return res.status(400).json({ message: "Comment must have text or an image" });
         }
 
-		const comment = { user: userId, text };
+        const user = await User.findById(userId);
+        if (!user) return res.status(404).json({ message: "User not found" });
 
-        post.comments.push(comment);
+        const post = await Post.findById(postId);
+        if (!post) return res.status(404).json({ error: "Post not found" });
+
+        if (img) {
+            try {
+                const uploadedResponse = await cloudinary.uploader.upload(img);
+                img = uploadedResponse.secure_url;
+            } catch (error) {
+                return res.status(500).json({ error: "Image upload failed" });
+            }
+        }
+
+
+        const comment = { user: userId, text, img };
+        post.comments.push(comment); 
+        console.log("asdasf",comment)
         await post.save();
 
-		res.status(200).json(post.comments);
+        const updatedPost = await Post.findById(postId)
+            .populate({ path: "user", select: "-password" })
+            .populate({ path: "comments.user", select: "-password" });
+
+        if (post.user.toString() !== userId.toString()) {
+            const newNotification = new Notification({ type: "comment", from: userId, to: post.user, post:postId});
+            await newNotification.save();
+        }
+       
+        res.status(200).json(updatedPost.comments);
     } catch (error) {
-		console.log("Error in commentOnPost controller: ", error);
-		res.status(500).json({ error: "Internal server error" });
+        console.error("Error in commentPost controller:", error);
+        res.status(500).json({ error: "Internal server error" });
     }
 };
+
 
 export const likePost = async (req,res) =>{
     try {
@@ -95,15 +140,16 @@ export const likePost = async (req,res) =>{
 			post.likes.push(userId);
             await User.updateOne({_id:userId}, { $push: { likePosts: postId} });
             await post.save();
-			const newNotification = new Notification({
+
+            if(post.user.toString() !== userId.toString()){
+                const newNotification = new Notification({
 				type: "like",
 				from: userId,
 				to: post.user,
-			});
-
-			await newNotification.save();
-            const updatedLikes = post.likes 
-            console.log(updatedLikes) 
+			    post:postId});
+                await newNotification.save();
+            }
+            const updatedLikes = post.likes
 			res.status(200).json(updatedLikes);
 		}
     }catch(error){
@@ -178,8 +224,7 @@ export const getUserPosts = async (req,res)=>{
         const {username}= req.params
         const user = await User.findOne({username})
 		if (!user) return res.status(404).json({ message: "User not found" });
-        
-        const following = user.following
+         
         const posts = await Post.find({user:user._id}).sort({createdAt:-1}).populate({
             path:"user",
             select:"-password"

@@ -7,6 +7,7 @@ import {
   QueryClient,
   QueryClientProvider
 } from '@tanstack/react-query'
+import {SocketContextProvider} from "../src/hooks/socket/useSocket.jsx"
 
 // Create a client
 const queryClient = new QueryClient({
@@ -19,7 +20,11 @@ const queryClient = new QueryClient({
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <BrowserRouter>
-    <QueryClientProvider client={queryClient}><App /></QueryClientProvider>
+    <QueryClientProvider client={queryClient}>
+      <SocketContextProvider>
+         <App />
+      </SocketContextProvider>
+     </QueryClientProvider>
     </BrowserRouter>
   </StrictMode>
 )

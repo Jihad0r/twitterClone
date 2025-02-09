@@ -4,10 +4,10 @@ import bcrypt from "bcryptjs"
 export const signup = async (req,res)=>{
     try{
         const {username,fullname,email,password} = req.body
-        const emailValidation = /^\w+@[a-zA-Z_]+?\.[a-zA-Z]{2,3}$/
-        if(!emailValidation.test(email)){
-            return res.status(400).json({error:"invild email format"})
-        }
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+		if (!emailRegex.test(email)) {
+			return res.status(400).json({ error: "Invalid email format" });
+		}  
         const isUserExist = await User.findOne({username})
         if(isUserExist){
             return res.status(400).json({error:"user is already exist"})
@@ -25,18 +25,18 @@ export const signup = async (req,res)=>{
         const newUser = new User({
             username,
             fullname,
-            email,
+            email, 
             password:hashPassword
         })
 
         if(newUser){
-            generateTokensAndSetCookie(newUser.id,res)
+            generateTokensAndSetCookie(newUser._id,res)
             await newUser.save()
             res.status(201).json({
+                _id:newUser._id,
                 username:newUser.username,
                 fullname:newUser.fullname,
-                email:newUser.email,
-                password:newUser.password,
+                email:newUser.email, 
                 followers:newUser.followers,
                 following:newUser.following,
                 profileImg:newUser.profileImg,
@@ -58,11 +58,7 @@ export const login = async(req,res)=>{
         const user = await User.findOne({username})
         const isPasswordCorrect = await bcrypt.compare(password, user?.password || "")
         if(!user || !isPasswordCorrect){
-            console.log(password);
-            console.log(user.password);
-            console.log(user)
-            console.error(user)
-            return res.status(400).json({error:"user not found"})
+            return res.status(400).json({error:"password is wrong"})
         }
             generateTokensAndSetCookie(user._id,res)
 
@@ -91,7 +87,6 @@ export const logout= async(req,res)=>{
 }
 export const myaccount = async(req,res)=>{
     try{
-        
         const user = await User.findById(req.user._id).select("-password")
         res.status(200).json(user)
     }catch(error){

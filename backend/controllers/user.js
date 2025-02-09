@@ -1,7 +1,5 @@
 import bcrypt from "bcryptjs";
 import { v2 as cloudinary } from "cloudinary";
-
-// models
 import Notification from "../models/notification.js";
 import User from "../models/user.js";
 export const getUserProfile = async (req, res) => {
@@ -18,11 +16,11 @@ export const getUserProfile = async (req, res) => {
 };
 
 export const followUser = async (req, res) => {
-	try {
+	try {  
 		const { id } = req.params;
 		const userToModify = await User.findById(id);
 		const currentUser = await User.findById(req.user._id);
-
+		// console.log("asassdcds",id)
 		if (id === req.user._id.toString()) {
 			return res.status(400).json({ error: "You can't follow/unfollow yourself" });
 		}
@@ -47,7 +45,7 @@ export const followUser = async (req, res) => {
 				from: req.user._id,
 				to: userToModify._id,
 			});
-
+			console.log(newNotification)
 			await newNotification.save();
 
 			res.status(200).json({ message: "User followed successfully" });
@@ -74,7 +72,6 @@ export const getSuggestedUser = async (req, res) => {
 			{ $sample: { size: 10 } },
 		]);
 
-		// 1,2,3,4,5,6,
 		const filteredUsers = users.filter((user) => !usersFollowedByMe.following.includes(user._id));
 		const suggestedUsers = filteredUsers.slice(0, 4);
 
@@ -86,7 +83,7 @@ export const getSuggestedUser = async (req, res) => {
 		res.status(500).json({ error: error.message });
 	}
 };
-
+ 
 export const updateUser = async (req, res) => {
 	const { fullname, email, username, currentPassword, newPassword, bio, link } = req.body;
 	let { profileImg, coverImg } = req.body;
