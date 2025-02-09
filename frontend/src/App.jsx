@@ -22,7 +22,7 @@ function App() {
 			try{
 				const res = await fetch("/api/auth/myaccount")
 				const data = await res.json()
-				if(data.error) return null
+				// if(data.error) return null
 				if(!res.ok)  throw new Error(data.error || "something went wrong")
 				return data
 			}catch(error){

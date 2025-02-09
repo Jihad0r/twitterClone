@@ -7,9 +7,9 @@ import notificationRoutes from "./routes/notification.js"
 import chatRoutes from "./routes/chat.js"
 import dotenv from "dotenv"
 import { connectDB } from "./db/connectDB.js"
-import cookieParser from "cookie-parser"
 import {v2 as cloudinary} from "cloudinary"
 import { app, server } from "./socket.js"
+import cookieParser from "cookie-parser"
 
 dotenv.config()
 
