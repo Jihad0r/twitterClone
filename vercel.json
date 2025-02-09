@@ -1,7 +1,6 @@
 {
   "version": 2,
-  "rewrites": [
-    { "source": "/api/(.*)", "destination": "/backend/server.js" },
-    { "source": "/(.*)", "destination": "/frontend/dist/index.html" }
+  "routes": [
+    { "src": "/(.*)", "dest": "/frontend/dist/index.html" }
   ]
 }
