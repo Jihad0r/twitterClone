@@ -3,10 +3,10 @@
   "version": "1.0.0",
   "main": "backend/server.js",
   "scripts": {
-    "server": "NODE_ENV=development nodemon backend/server.js",
-    "start": "NODE_ENV=production node backend/server.js",
-    "build": "npm install && npm install --prefix frontend && npm run build --prefix frontend"
-  },
+  "vercel-build": "cd frontend && npm install && npm run build && cd ..",
+  "server": "NODE_ENV=development nodemon backend/server.js",
+  "start": "NODE_ENV=production node backend/server.js"
+},
   "keywords": [],
   "author": "",
   "type": "module",
@@ -22,7 +22,8 @@
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.9.3",
     "multer": "^1.4.5-lts.1",
-    "socket.io": "^4.8.1"
+    "socket.io": "^4.8.1",
+    "vercel": "^41.0.2"
   },
   "devDependencies": {
     "nodemon": "^3.1.9"
