@@ -10,7 +10,7 @@ export const SocketContextProvider = ({children}) =>{
     const [socket,setSocket] = useState(null)
     const [onlineUser,setOnlineUser] = useState([])
     const {data:authUser} = useQuery({queryKey:["authUser"]})
-    useEffect(()=>{
+    useEffect(()=>{ 
         if(authUser){
             const socket =io("http://localhost:5000",{
                 query:{
